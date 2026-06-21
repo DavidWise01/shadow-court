@@ -12,6 +12,9 @@ back to a baked-in seed when offline). It loops on its own. The `⏸ Recess the 
 - **The docket is a witnessed chain.** Each entry is `hash8(prevHash | title | verdict | panelNet)`, so every ruling is cryptographically
   linked to the one before it (the first anchors to `GENESIS`). Tamper one verdict and every link downstream breaks — the Lattice's
   Detect → Compare → Witness → Anchor, applied to the court's own history.
+- **It is now live, not asserted:** `⊻ verify chain` re-walks the docket, recomputes every hash, and flags any forged ruling or cut link
+  (`#N forged` / `#N link cut`); `⬇ export` dumps the ledger as JSON; the chain **persists to localStorage**, so it survives reloads and
+  grows into a real, growing ledger across sessions. `✕` clears it.
 - The deterministic **CORE is untouched** — the perpetual loop and docket live entirely in the player. `node audit.js` still passes 15/15,
   including `shipped_equals_tested` (the audited CORE block ships verbatim inside `index.html`).
 

@@ -94,6 +94,12 @@
     <a class="src" id="src" href="#" target="_blank" rel="noopener"></a>
     <h2 style="margin-top:15px">⛓ Docket — witnessed chain</h2>
     <div class="status" id="perpstat">perpetual: ON · debating forever</div>
+    <div style="display:flex;gap:6px;margin:0 0 6px">
+      <button style="width:auto;flex:1;margin:0;padding:6px 8px;font-size:11px" onclick="verifyChain()">⊻ verify chain</button>
+      <button style="width:auto;flex:1;margin:0;padding:6px 8px;font-size:11px" onclick="exportDocket()">⬇ export</button>
+      <button style="width:auto;margin:0;padding:6px 9px;font-size:11px" onclick="clearDocket()" title="clear the ledger">✕</button>
+    </div>
+    <div class="status" id="verifystat"></div>
     <div id="docket" style="font-family:var(--mono);font-size:10.5px;max-height:34vh;overflow:auto"></div>
   </aside>
 
@@ -260,11 +266,23 @@ let article=SEEDS_BANK[0], seedIdx=0, res=null, raf=null, startTs=0, revealed=ne
 // ── perpetual machinery: debate forever, topic after topic; each verdict witnessed in a hash-linked docket ──
 let perpetual=true, docket=[], debateNo=0, prevHash="GENESIS", nextTimer=null;
 function hash8(str){ let h=0x811c9dc5>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return ("0000000"+(h>>>0).toString(16)).slice(-8); }
-function recordDocket(){ debateNo++; const prev=prevHash;
-  const body=prev+"|"+article.title+"|"+res.verdict+"|"+res.panelNet.toFixed(3); const h=hash8(body); prevHash=h;
-  docket.unshift({no:debateNo,title:article.title,verdict:res.verdict,panel:res.panelNet.toFixed(2),prev:prev,hash:h});
-  if(docket.length>200) docket.pop();
-  renderDocket(); const c=$("counter"); if(c) c.textContent="debate #"+debateNo; }
+function recordDocket(){ debateNo++; const prev=prevHash; const panel3=res.panelNet.toFixed(3);
+  const body=prev+"|"+article.title+"|"+res.verdict+"|"+panel3; const h=hash8(body); prevHash=h;
+  docket.unshift({no:debateNo,title:article.title,verdict:res.verdict,panel:res.panelNet.toFixed(2),panel3:panel3,prev:prev,hash:h});
+  if(docket.length>300) docket.pop();
+  saveDocket(); renderDocket(); const c=$("counter"); if(c) c.textContent="debate #"+debateNo; }
+function saveDocket(){ try{ localStorage.setItem("shadowCourtDocket", JSON.stringify(docket)); }catch(e){} }
+function loadDocket(){ try{ var s=JSON.parse(localStorage.getItem("shadowCourtDocket")||"[]"); if(s.length){ docket=s; debateNo=s[0].no; prevHash=s[0].hash; } }catch(e){} }
+function verifyChain(){ var breaks=[]; for(var i=0;i<docket.length;i++){ var e=docket[i];
+    var recomputed=hash8(e.prev+"|"+e.title+"|"+e.verdict+"|"+(e.panel3!=null?e.panel3:e.panel));
+    if(recomputed!==e.hash) breaks.push("#"+e.no+" forged");
+    var older=docket[i+1]; if(older){ if(e.prev!==older.hash) breaks.push("#"+e.no+" link cut"); } else if(e.prev!=="GENESIS") breaks.push("#"+e.no+" not anchored"); }
+  var s=$("verifystat"), ok=breaks.length===0;
+  if(s){ s.style.color=ok?"var(--good)":"var(--bad)"; s.textContent=ok?("⊻ VERIFIED · "+docket.length+" rulings · every link intact · anchored to GENESIS · ⚓ "+prevHash):("⊻ BROKEN · "+breaks.slice(0,3).join("; ")); }
+  return {ok:ok,breaks:breaks}; }
+function exportDocket(){ try{ var blob=new Blob([JSON.stringify({artifact:"shadow-court",method:"hash-linked docket (FNV-1a/8)",anchor:prevHash,count:docket.length,docket:docket},null,2)],{type:"application/json"});
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="shadow-court-docket.json"; a.click(); }catch(e){} }
+function clearDocket(){ docket=[]; debateNo=0; prevHash="GENESIS"; saveDocket(); renderDocket(); var c=$("counter"); if(c)c.textContent="debate #0"; var s=$("verifystat"); if(s)s.textContent=""; }
 function renderDocket(){ const d=$("docket"); if(!d) return;
   d.innerHTML=docket.map(function(e){ const col=e.verdict==="UPHELD"?"var(--good)":e.verdict==="STRUCK"?"var(--bad)":"var(--warn)";
     return '<div style="border-left:2px solid '+col+';padding:3px 0 3px 8px;margin:0 0 6px"><span style="color:'+col+';font-weight:700">#'+e.no+' '+e.verdict+'</span> · panel '+e.panel+'<br><span style="color:var(--ink)">'+e.title.replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</span><br><span style="color:var(--mute)">⛓ '+e.hash+' ← '+e.prev.slice(0,8)+'</span></div>'; }).join(""); }
@@ -397,6 +415,7 @@ async function fetchRandom(){ $("status").textContent="fetching from wikipedia�
     $("status").textContent="live: "+article.title; runDebate();
   }catch(e){ $("status").textContent="live fetch blocked ("+e.message+") — using offline seed"; cycleSeed(); } }
 
+loadDocket(); renderDocket(); if(debateNo){ var _c=$("counter"); if(_c) _c.textContent="debate #"+debateNo; }
 $("status").textContent="loaded: "+article.title; runDebate();
 </script>
 </body>
