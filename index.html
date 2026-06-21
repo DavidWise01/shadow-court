@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shadow Court — perpetual debate · a Whisper Lattice artifact</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23a7a3c8' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%238a5fe0'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --void:#0a0b14; --ink:#e9eaf6; --mute:#878cab; --panel:#12152333; --line:#222743; --line2:#2c335a;
+    --male:#5bc6e2; --female:#f0a35e; --aff:#ffd874; --neg:#c281f2; --judge:#cdd3f2;
+    --frame:#5bc6e2; --rk:#ffd874; --rq:#f0a35e; --rj:#86d8a8; --delib:#cdd3f2;
+    --good:#54d08a; --warn:#f3c34e; --bad:#f0698a; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box} html,body{margin:0;height:100%}
+  body{background:radial-gradient(900px 600px at 50% 10%,rgba(91,198,226,.08),transparent 60%),var(--void);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  header{padding:14px 24px 10px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--mute)}
+  h1{margin:.14em 0 .08em;font-size:23px;font-weight:800;letter-spacing:-.02em}
+  .lede{color:var(--mute);font-size:12.5px;max-width:96ch;line-height:1.5}.lede b{color:var(--ink);font-weight:600}
+  main{display:grid;grid-template-columns:288px minmax(0,1fr) 350px;gap:12px;padding:12px;height:calc(100% - 84px)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;overflow:auto}
+  .panel h2{margin:0 0 8px;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--mute);font-family:var(--mono);font-weight:600}
+  .floor{display:flex;flex-direction:column;gap:11px;min-height:0}
+  /* clock + agenda */
+  .clockrow{border:1px solid var(--line);border-radius:14px;padding:11px 13px;background:rgba(255,255,255,.02)}
+  .clock{font-family:var(--mono);font-size:30px;font-weight:800;letter-spacing:.02em;line-height:1}
+  .clock small{font-size:14px;color:var(--mute);font-weight:600}
+  .nowline{font-family:var(--mono);font-size:11.5px;color:var(--mute);margin-top:5px;min-height:1.2em}
+  .agenda{position:relative;display:flex;height:16px;border-radius:6px;overflow:hidden;margin-top:9px;border:1px solid var(--line)}
+  .agenda .blk{height:100%;opacity:.5;border-right:1px solid rgba(0,0,0,.4)}
+  .agenda .playhead{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;left:0;box-shadow:0 0 6px #fff;z-index:2;transition:left .08s linear}
+  .agtags{display:flex;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:6px}
+  .agtags span{display:flex;align-items:center;gap:5px}.sw{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .stagewrap{border:1px solid var(--line);border-radius:14px;background:radial-gradient(circle at 50% 28%,rgba(255,255,255,.035),transparent 70%);display:flex;align-items:center;justify-content:center;height:34%;min-height:0}
+  svg#stage{width:100%;height:100%;max-height:280px}
+  .transcriptpanel{flex:1;min-height:0;display:flex;flex-direction:column}#transcript{overflow:auto;flex:1;padding-right:4px}
+  button{font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:#171b30;border:1px solid var(--line2);border-radius:10px;padding:9px 11px;width:100%;margin:0 0 8px;cursor:pointer;text-align:left;transition:.15s}
+  button:hover{border-color:var(--male);background:#1b2138}button.primary{background:#1d2640;border-color:#3a4a7a}button:focus-visible{outline:2px solid var(--male);outline-offset:2px}
+  button .k{font-family:var(--mono);font-size:11px;color:var(--mute);display:block}
+  select{width:100%;margin:0 0 8px;padding:8px;background:#171b30;color:var(--ink);border:1px solid var(--line2);border-radius:10px;font:inherit;font-size:12.5px}
+  .status{font-family:var(--mono);font-size:11px;color:var(--mute);margin:2px 0 11px;min-height:1.2em}
+  .arttitle{font-size:14px;font-weight:700;margin:2px 0 6px;line-height:1.25}
+  .extract{font-size:12px;line-height:1.5;color:#cfd3ea;max-height:20vh;overflow:auto;border-left:2px solid var(--line2);padding:2px 0 2px 10px;margin:0 0 8px}
+  a.src{font-family:var(--mono);font-size:11px;color:var(--male);text-decoration:none}a.src:hover{text-decoration:underline}
+  .entry{border-left:3px solid var(--line2);padding:5px 0 5px 10px;margin:0 0 7px;opacity:0;transform:translateY(3px);transition:opacity .3s,transform .3s}
+  .entry.show{opacity:1;transform:none}
+  .entry .top{display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap}
+  .who{font-weight:700;font-size:12px}.ts{font-family:var(--mono);font-size:10px;color:var(--mute)}
+  .tag{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;letter-spacing:.05em}
+  .tag.aff{background:rgba(255,216,116,.14);color:var(--aff)}.tag.neg{background:rgba(194,129,242,.16);color:var(--neg)}
+  .tag.frame{background:rgba(91,198,226,.14);color:var(--frame)}.tag.question{background:rgba(205,211,242,.14);color:var(--judge)}.tag.ruling{background:rgba(84,208,138,.14);color:var(--good)}
+  .entry.aff{border-color:var(--aff)}.entry.neg{border-color:var(--neg)}.entry.frame{border-color:var(--frame)}.entry.question{border-color:var(--judge)}.entry.ruling{border-color:var(--good)}
+  .say{font-size:12px;line-height:1.42;color:#dfe2f2}.delta{font-family:var(--mono);font-size:10px;color:var(--mute);margin-left:auto}
+  .resbox{font-size:12.5px;line-height:1.4;border:1px solid var(--line2);border-radius:10px;padding:8px 10px;margin-bottom:12px}.resbox .m{font-family:var(--mono);color:var(--mute);font-size:11px;margin-top:3px}
+  .frameline{font-size:11.5px;line-height:1.4;margin:0 0 7px;padding-left:9px;border-left:2px solid}.frameline.f{border-color:var(--female)}.frameline.m{border-color:var(--male)}.frameline b{font-family:var(--mono);font-size:10px}
+  .judge{margin:0 0 10px}.judge .jl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}.judge .jl .ballot{font-family:var(--mono);font-weight:700}
+  .meter{position:relative;height:10px;border-radius:99px;background:#0a0d1a;border:1px solid var(--line);overflow:hidden}.meter .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line2)}
+  .meter .mk{position:absolute;top:-2px;height:14px;width:14px;border-radius:50%;border:2px solid #0a0d1a;transition:left .35s ease;transform:translateX(-50%)}
+  .reason{font-size:11.5px;line-height:1.42;border-left:2px solid var(--line2);padding:5px 0 5px 9px;margin:0 0 8px;color:#cfd3ea}.reason b{font-family:var(--mono);font-size:10px;letter-spacing:.04em}
+  .verdict{display:flex;align-items:baseline;gap:10px;border:1px solid var(--line2);border-radius:12px;padding:10px 12px;margin:0 0 8px}.verdict .big{font-size:21px;font-weight:800}.verdict .pn{font-family:var(--mono);font-size:12px;color:var(--mute);margin-left:auto}
+  .UPHELD{color:var(--good)}.CONTESTED{color:var(--warn)}.STRUCK{color:var(--bad)}.panelline{font-family:var(--mono);font-size:12px;color:var(--mute);margin-bottom:6px}
+  footer{font-family:var(--mono);font-size:10px;color:var(--mute);padding:0 14px 10px;line-height:1.5}
+  .nodelabel{font-family:var(--mono);font-size:10px;fill:var(--mute)}
+  @media (max-width:1080px){main{grid-template-columns:1fr;height:auto}.stagewrap{height:54vw;max-height:280px}#transcript{max-height:46vh}}
+  @media (prefers-reduced-motion:reduce){.entry{transition:none}.meter .mk,.agenda .playhead{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">60:00&nbsp;·&nbsp;for&nbsp;vs&nbsp;against&nbsp;·&nbsp;cross-examined&nbsp;·&nbsp;reasoned&nbsp;ballot&nbsp;·&nbsp;<b style="color:var(--aff)">perpetual</b></div>
+  <h1>Shadow Court — the perpetual debate</h1>
+  <div class="eyebrow" style="margin-top:5px">⬡ a <a href="https://davidwise01.github.io/whisper-lattice/" style="color:var(--male);text-decoration:none" target="_blank" rel="noopener">WHISPER LATTICE</a> artifact · witnessed · <span id="counter">debate #0</span> · the court never adjourns</div>
+  <div class="lede">The nucleus frames the resolution (<b>F</b> then <b>M</b>), then a full hour runs: three rounds — King, Queen, Jester —
+  each a 5-min <b>For</b> constructive, a 5-min <b>Against</b> constructive, a 2-min rebuttal, and a question from the matching <b>judge</b>
+  with the answer. Three judges tabulate every scored exchange in silence, then deliberate and <b>say why</b>. Watch the clock.</div>
+</header>
+
+<main>
+  <aside class="panel">
+    <h2>Source &amp; controls</h2>
+    <button class="primary" onclick="runDebate()">▶ Run the hour <span class="k">00:00 → 60:00</span></button>
+    <select id="speed" onchange="onSpeed()">
+      <option value="fast">Playback: Fast (~45s)</option>
+      <option value="quick">Playback: Quick (~90s)</option>
+      <option value="instant">Playback: Instant</option>
+    </select>
+    <button onclick="fetchRandom()">Pull a random article <span class="k">live · en.wikipedia.org</span></button>
+    <button onclick="cycleSeed()">Cycle a baked-in article <span class="k">offline · always works</span></button>
+    <button id="perpbtn" onclick="togglePerpetual()">⏸ Recess the court <span class="k">stop after this debate</span></button>
+    <div class="status" id="status">ready.</div>
+    <div class="arttitle" id="arttitle">—</div>
+    <div class="extract" id="extract">—</div>
+    <a class="src" id="src" href="#" target="_blank" rel="noopener"></a>
+    <h2 style="margin-top:15px">⛓ Docket — witnessed chain</h2>
+    <div class="status" id="perpstat">perpetual: ON · debating forever</div>
+    <div id="docket" style="font-family:var(--mono);font-size:10.5px;max-height:34vh;overflow:auto"></div>
+  </aside>
+
+  <section class="floor">
+    <div class="clockrow">
+      <div class="clock"><span id="clock">00:00</span> <small>/ 60:00</small></div>
+      <div class="nowline" id="nowline">press “Run the hour”.</div>
+      <div class="agenda" id="agenda"><div class="playhead" id="playhead"></div></div>
+      <div class="agtags">
+        <span><i class="sw" style="background:var(--frame)"></i>framing</span>
+        <span><i class="sw" style="background:var(--rk)"></i>King round</span>
+        <span><i class="sw" style="background:var(--rq)"></i>Queen round</span>
+        <span><i class="sw" style="background:var(--rj)"></i>Jester round</span>
+        <span><i class="sw" style="background:var(--delib)"></i>deliberation</span>
+      </div>
+    </div>
+    <div class="stagewrap"><svg id="stage" viewBox="0 0 600 405" role="img" aria-label="debate floor"></svg></div>
+    <div class="panel transcriptpanel"><h2>Floor — live transcript</h2><div id="transcript"></div></div>
+  </section>
+
+  <aside class="panel">
+    <h2>Resolution</h2><div class="resbox" id="resolution">—</div>
+    <h2>Nucleus frames it</h2><div id="framing"></div>
+    <h2>Judges (silent) — live ballot</h2><div id="judges"></div>
+    <h2>Decision</h2>
+    <div class="verdict"><span class="big" id="verdict">—</span><span class="pn" id="pn"></span></div>
+    <div class="panelline" id="panel"></div>
+    <h2>Reasons for decision</h2><div id="reasons"></div>
+  </aside>
+</main>
+
+<footer>heuristic instrument · logic verified by audit.js (Closure Loop, 15 checks) before ship · timeline = 3600s · judges tabulate the actual scored exchanges · <b style="color:var(--aff)">perpetual</b>: topic after topic, forever — each verdict witnessed in a hash-linked docket (⛓ tamper one ruling and the chain breaks downstream)</footer>
+
+<script>/*__CORE_START__*/
+// TOPH atom-court core v4 — full 60:00 policy debate with timeline, cross-ex, and judge reasons.
+// For team vs Against team (K/Q/J each); 3 judges tabulate scored events and rule with reasons.
+// Nucleus (F first, M second) frames; first and last. Fully deterministic.
+(function (root) {
+  "use strict";
+  var W_MALE=0.48, W_FEMALE=0.52, W_SAME=1.0, W_CROSS=0.4;
+  var ROLES=["King","Queen","Jester"];
+  var AXIS={King:"authority",Queen:"breadth",Jester:"resistance"};
+  var TOTAL=3600;
+
+  function clamp01(x){ if(!isFinite(x)) return 0; return x<0?0:x>1?1:x; }
+  function round(x,n){ var p=Math.pow(10,n||3); return Math.round(x*p)/p; }
+  function pct(x){ return (x*100).toFixed(1)+"%"; }
+  function countAny(w,s){ var n=0; for(var i=0;i<w.length;i++) if(s[w[i]]) n++; return n; }
+  function toSet(s){ var o={},a=s.split(" "); for(var i=0;i<a.length;i++) o[a[i]]=1; return o; }
+  var ASSERT=toSet("is are was must will shall proves demonstrates shows clearly always never fact established therefore thus defines determines causes");
+  var HEDGE =toSet("may might could perhaps suggests appears seems possibly probably likely often sometimes can would believed thought estimated approximately");
+  var RELATE=toSet("between together within relates depends context among across shared connection interaction system network relationship mutual interdependent emergent");
+
+  function extractFeatures(text){
+    text=String(text||"");
+    var words=(text.toLowerCase().match(/[a-z']+/g)||[]); var W=words.length||1;
+    var sentences=(text.match(/[.!?]+/g)||[]).length||1; var digits=(text.match(/[0-9]/g)||[]).length;
+    var uniq={}; for(var i=0;i<words.length;i++) uniq[words[i]]=1;
+    return { words:W, sentences:sentences, avgSentLen:W/sentences, digitDensity:digits/W,
+      assert:countAny(words,ASSERT)/W, hedge:countAny(words,HEDGE)/W, rel:countAny(words,RELATE)/W,
+      lexDiversity:Object.keys(uniq).length/W };
+  }
+  function nucleusDebate(f){
+    var mScore=clamp01(0.5 + 6.0*f.assert + 3.0*f.digitDensity - 4.0*f.hedge);
+    var fScore=clamp01(0.42 + 6.0*f.rel + 0.45*f.lexDiversity + 1.5*f.hedge);
+    return { wMale:W_MALE, wFemale:W_FEMALE, mScore:mScore, fScore:fScore, merit:W_MALE*mScore+W_FEMALE*fScore };
+  }
+  function roleBase(role,idea,f){
+    if(role==="King")  return idea.merit;
+    if(role==="Queen") return clamp01(0.30 + 0.5*f.lexDiversity + 4.0*f.rel);
+    return clamp01(1 - 2*Math.abs(idea.mScore-idea.fScore));
+  }
+  function recoveryFor(role,idea,f){
+    if(role==="King")  return idea.mScore;
+    if(role==="Queen") return f.lexDiversity;
+    return clamp01(1 - 2*Math.abs(idea.mScore-idea.fScore));
+  }
+  function weight(jr,er){ return jr===er?W_SAME:W_CROSS; }
+
+  function deliberate(text,_seed){
+    var f=extractFeatures(text), idea=nucleusDebate(f);
+    var dmf=Math.abs(idea.mScore-idea.fScore);
+    var segments=[], t=0, sid=0;
+    function seg(dur,phase,kind,speaker,side,role,strength,scored,text){
+      var s={id:"s"+(sid++),t0:t,t1:t+dur,dur:dur,phase:phase,kind:kind,speaker:speaker,side:side,role:role,strength:strength,scored:!!scored,text:text};
+      t+=dur; segments.push(s); return s;
+    }
+
+    // nucleus frames: F first (relation 52%), then M (assertion 48%)
+    seg(180,"framing","frame","Nucleus · F",0,null,0,false,
+      "Madam Chair, read relationally this resolution is a system of dependencies — relational density "+pct(f.rel)+". The question is whether it coheres.");
+    seg(180,"framing","frame","Nucleus · M",0,null,0,false,
+      "And read as a claim it must compel — assertion "+pct(f.assert)+" against hedging "+pct(f.hedge)+". Merit opens at "+round(idea.merit,2)+".");
+
+    // three rounds (14:00 each)
+    ROLES.forEach(function(role){
+      var base=roleBase(role,idea,f), ax=AXIS[role];
+      var forStr=base, againstStr=1-base;
+      var leaderSign=base>=0.5?1:-1, trailerSign=-leaderSign;
+      var rebStr=Math.abs(2*base-1)*0.5;
+      var recovery=recoveryFor(role,idea,f), ansStr=recovery*0.6;
+      // For constructive (5:00)
+      seg(300,"round-"+role,"constructive","For · "+role,1,role,forStr,true,
+        role==="King"?("Affirmative constructive: the resolution holds on authority — assertion "+pct(f.assert)+", merit "+round(idea.merit,2)+". We affirm ("+forStr.toFixed(2)+").")
+        :role==="Queen"?("Affirmative: breadth carries it — relational density "+pct(f.rel)+", lexical reach "+round(f.lexDiversity,2)+". The idea connects.")
+        :("Affirmative: it holds under inversion — both frames converge (Δ "+round(dmf,2)+"). Robust under cross-ex."));
+      // Against constructive (5:00)
+      seg(300,"round-"+role,"constructive","Against · "+role,-1,role,againstStr,true,
+        role==="King"?("Negative constructive: the claim overreaches — hedging "+pct(f.hedge)+" leaves it unproven. We negate ("+againstStr.toFixed(2)+").")
+        :role==="Queen"?("Negative: the connections are thin where it counts; the case doesn't generalize.")
+        :("Negative: flip the frame and it splits (Δ "+round(dmf,2)+"); the claim is contingent."));
+      // Rebuttal (2:00) — the leader presses
+      seg(120,"round-"+role,"rebuttal",(leaderSign>0?"For":"Against")+" · "+role,leaderSign,role,rebStr,true,
+        (leaderSign>0?"For rebuttal: the negative's objection doesn't land — our "+ax+" advantage stands.":"Against rebuttal: the affirmative thins under pressure on "+ax+"; the burden isn't met."));
+      // Judge question (1:00) — the matching judge questions the trailing side
+      seg(60,"round-"+role,"question","Judge · "+role,0,role,0,false,
+        "Judge "+role+" to the "+(trailerSign>0?"affirmative":"negative")+": on "+ax+", what survives the strongest objection?");
+      // Answer (1:00) — the trailing side defends; cross-ex moves the panel
+      seg(60,"round-"+role,"answer",(trailerSign>0?"For":"Against")+" · "+role,trailerSign,role,ansStr,true,
+        "Defense: "+(recovery>0.5?"we recover — ":"we concede ground — ")+ax+" support sits at "+round(recovery,2)+" ("+(trailerSign>0?"affirmative":"negative")+").");
+    });
+
+    // tally the three silent judges over all scored events
+    var scored=segments.filter(function(s){return s.scored;});
+    var judges=[], sumNet=0, aff=0, neg=0, tie=0;
+    ROLES.forEach(function(jr){
+      var net=0, decisive=null, maxAbs=-1;
+      scored.forEach(function(s){
+        var c=s.side*s.strength*weight(jr,s.role); net+=c;
+        if(Math.abs(c)>maxAbs){ maxAbs=Math.abs(c); decisive={role:s.role,kind:s.kind,side:s.side,contrib:c}; }
+      });
+      var ballot=net>1e-9?"AFF":net<-1e-9?"NEG":"TIE";
+      if(ballot==="AFF") aff++; else if(ballot==="NEG") neg++; else tie++;
+      var side=decisive.side>0?"the affirmative":"the negative";
+      var reason="I weight "+AXIS[jr]+". The "+decisive.role+" round decided it — "+side+"'s "+decisive.kind+" carried "+(decisive.contrib>=0?"+":"")+round(decisive.contrib,2)+" with me. Ballot "+ballot+" (net "+round(net,2)+").";
+      judges.push({role:jr,net:net,ballot:ballot,reason:reason,decisive:decisive}); sumNet+=net;
+    });
+    var panelNet=sumNet/ROLES.length;
+    var verdict=panelNet>=0.2?"UPHELD":panelNet<=-0.2?"STRUCK":"CONTESTED";
+
+    // deliberation (12:00): each judge rules with its reason
+    ROLES.forEach(function(jr){
+      var j=judges.filter(function(x){return x.role===jr;})[0];
+      seg(240,"deliberation","ruling","Judge · "+jr,0,jr,0,false,j.reason);
+    });
+
+    return { features:f, nucleus:idea, totalSeconds:TOTAL, segments:segments,
+      judges:judges, panelNet:panelNet, ballotCount:{aff:aff,neg:neg,tie:tie}, verdict:verdict };
+  }
+
+  var API={ W_MALE:W_MALE,W_FEMALE:W_FEMALE,W_SAME:W_SAME,W_CROSS:W_CROSS,ROLES:ROLES,AXIS:AXIS,TOTAL:TOTAL,
+    clamp01:clamp01,extractFeatures:extractFeatures,nucleusDebate:nucleusDebate,roleBase:roleBase,recoveryFor:recoveryFor,deliberate:deliberate };
+  if(typeof module!=="undefined"&&module.exports) module.exports=API;
+  root.CORE=API;
+})(typeof globalThis!=="undefined"?globalThis:this);
+/*__CORE_END__*/</script>
+<script>
+"use strict";
+const SEEDS_BANK=[{"title": "Octopus", "extract": "An octopus is a soft-bodied, eight-limbed mollusc of the order Octopoda. The order consists of some 300 species and is grouped within the class Cephalopoda with squids, cuttlefish, and nautiloids. Like other cephalopods, an octopus is bilaterally symmetric with two eyes and a beaked mouth at the centre point of the eight limbs. An octopus can radically deform its shape, enabling it to squeeze through small gaps. They trail their appendages behind them as they swim backwards. The siphon is used for respiration and locomotion. Octopuses have a complex nervous system and excellent sight, and are among the most intelligent and behaviourally diverse invertebrates.", "url": "https://en.wikipedia.org/wiki/Octopus"}, {"title": "Stoicism", "extract": "Stoicism is a philosophical movement and practical guide to living, emphasizing daily self-discipline and moral improvement, which originated in the Hellenistic period of ancient Greece and proliferated well into the Roman Imperial period. The ancient Stoics believed that the universe operated according to reason, or logos, providing a unified account of the world, constructed from ideals of rational discourse, monistic physics, and naturalistic ethics. These three ideals constitute virtue, which is necessary for the Stoic goal of 'living a well-reasoned life'.", "url": "https://en.wikipedia.org/wiki/Stoicism"}, {"title": "Halting problem", "extract": "In computability theory, the halting problem is the decision problem of determining, from a description of an arbitrary computer program and an input, whether the program will eventually halt or continue to run forever. Alan Turing proved in 1937 that the halting problem is undecidable, meaning that no general algorithm exists that can correctly solve the problem for all possible program–input pairs. The problem comes up often in discussions of computability since it demonstrates that some functions are mathematically definable but not computable.", "url": "https://en.wikipedia.org/wiki/Halting_problem"}];
+const SVGNS="http://www.w3.org/2000/svg";
+const $=s=>document.getElementById(s);
+const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+let article=SEEDS_BANK[0], seedIdx=0, res=null, raf=null, startTs=0, revealed=new Set(), running={};
+// ── perpetual machinery: debate forever, topic after topic; each verdict witnessed in a hash-linked docket ──
+let perpetual=true, docket=[], debateNo=0, prevHash="GENESIS", nextTimer=null;
+function hash8(str){ let h=0x811c9dc5>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return ("0000000"+(h>>>0).toString(16)).slice(-8); }
+function recordDocket(){ debateNo++; const prev=prevHash;
+  const body=prev+"|"+article.title+"|"+res.verdict+"|"+res.panelNet.toFixed(3); const h=hash8(body); prevHash=h;
+  docket.unshift({no:debateNo,title:article.title,verdict:res.verdict,panel:res.panelNet.toFixed(2),prev:prev,hash:h});
+  if(docket.length>200) docket.pop();
+  renderDocket(); const c=$("counter"); if(c) c.textContent="debate #"+debateNo; }
+function renderDocket(){ const d=$("docket"); if(!d) return;
+  d.innerHTML=docket.map(function(e){ const col=e.verdict==="UPHELD"?"var(--good)":e.verdict==="STRUCK"?"var(--bad)":"var(--warn)";
+    return '<div style="border-left:2px solid '+col+';padding:3px 0 3px 8px;margin:0 0 6px"><span style="color:'+col+';font-weight:700">#'+e.no+' '+e.verdict+'</span> · panel '+e.panel+'<br><span style="color:var(--ink)">'+e.title.replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</span><br><span style="color:var(--mute)">⛓ '+e.hash+' ← '+e.prev.slice(0,8)+'</span></div>'; }).join(""); }
+async function advanceTopic(){
+  try{ const r=await fetch("https://en.wikipedia.org/api/rest_v1/page/random/summary",{headers:{Accept:"application/json"}}); if(!r.ok) throw 0;
+    const j=await r.json(); const ex=(j.extract||"").replace(/\s+/g," ").trim(); if(ex.length<60) throw 0;
+    article={title:j.title||"(untitled)",extract:ex,url:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||""};
+    $("status").textContent="live: "+article.title;
+  }catch(e){ seedIdx=(seedIdx+1)%SEEDS_BANK.length; article=SEEDS_BANK[seedIdx]; $("status").textContent="offline seed: "+article.title; } }
+function scheduleNext(){ if(nextTimer){clearTimeout(nextTimer);nextTimer=null;} if(!perpetual) return;
+  $("nowline").textContent="⚖ the court rises — next resolution incoming…";
+  nextTimer=setTimeout(async function(){ nextTimer=null; await advanceTopic(); runDebate(); }, 2800); }
+function togglePerpetual(){ perpetual=!perpetual; const b=$("perpbtn"), s=$("perpstat");
+  if(perpetual){ if(b) b.innerHTML='⏸ Recess the court <span class="k">stop after this debate</span>'; if(s) s.textContent="perpetual: ON · debating forever"; scheduleNext(); }
+  else { if(nextTimer){clearTimeout(nextTimer);nextTimer=null;} if(b) b.innerHTML='▶ Resume — debate forever <span class="k">perpetual, topic after topic</span>'; if(s) s.textContent="perpetual: OFF · recessed after this debate"; } }
+
+const NUC=[300,50];
+const POS={ "F.King":[92,128],"F.Queen":[92,196],"F.Jester":[92,264],
+           "A.King":[508,128],"A.Queen":[508,196],"A.Jester":[508,264],
+           "J.King":[210,352],"J.Queen":[300,352],"J.Jester":[390,352] };
+const SIDECOL={F:"var(--aff)",A:"var(--neg)",J:"var(--judge)"};
+const PHASECOL={framing:"var(--frame)","round-King":"var(--rk)","round-Queen":"var(--rq)","round-Jester":"var(--rj)",deliberation:"var(--delib)"};
+
+function mmss(s){ s=Math.max(0,Math.floor(s)); const m=Math.floor(s/60),x=s%60; return (m<10?"0":"")+m+":"+(x<10?"0":"")+x; }
+function voteColor(v){ return "hsl("+Math.round(v*130)+",72%,56%)"; }
+function el(t,a){ const e=document.createElementNS(SVGNS,t); for(const k in a) e.setAttribute(k,a[k]); return e; }
+function pie(cx,cy,r,a0,a1){ let p="M"+cx+","+cy; const n=36; for(let i=0;i<=n;i++){ const a=(a0+(a1-a0)*i/n)*Math.PI/180; p+=" L"+(cx+r*Math.cos(a))+","+(cy-r*Math.sin(a)); } return p+" Z"; }
+function addText(svg,x,y,txt,style){ const t=el("text",{x:x,y:y,"text-anchor":"middle","dominant-baseline":"middle"}); let s="font-family:var(--mono);"; for(const k in style) s+=k+":"+style[k]+";"; t.setAttribute("style",s); t.textContent=txt; svg.appendChild(t); return t; }
+function nodeForSpeaker(sp){ if(sp.indexOf("Nucleus")===0) return "NUC"; const m=sp.split(" · "); const team=m[0],role=m[1];
+  return team==="For"?"F."+role:team==="Against"?"A."+role:team==="Judge"?"J."+role:null; }
+
+function buildStage(){
+  const svg=$("stage"); svg.innerHTML="";
+  ["F.King","A.King"].forEach(function(k){ const p=POS[k]; svg.appendChild(el("line",{x1:NUC[0],y1:NUC[1],x2:p[0],y2:p[1],stroke:"#5a6088","stroke-opacity":"0.16","stroke-width":"1"})); });
+  ["J.King","J.Queen","J.Jester"].forEach(function(k){ const p=POS[k]; svg.appendChild(el("line",{x1:p[0],y1:p[1],x2:300,y2:200,stroke:"var(--judge)","stroke-opacity":"0.1","stroke-dasharray":"3 7","stroke-width":"1"})); });
+  svg.appendChild(el("path",{d:pie(NUC[0],NUC[1],26,180,360),fill:"var(--female)","fill-opacity":"0.16",stroke:"var(--female)","stroke-opacity":"0.55"}));
+  svg.appendChild(el("path",{d:pie(NUC[0],NUC[1],26,0,180),fill:"var(--male)","fill-opacity":"0.16",stroke:"var(--male)","stroke-opacity":"0.55"}));
+  addText(svg,NUC[0]-11,NUC[1],"F",{fill:"var(--female)","font-weight":"700","font-size":"10px"});
+  addText(svg,NUC[0]+11,NUC[1],"M",{fill:"var(--male)","font-weight":"700","font-size":"10px"});
+  addText(svg,92,104,"FOR · affirmative",{fill:"var(--aff)","font-size":"10.5px","font-weight":"700"});
+  addText(svg,508,104,"AGAINST · negative",{fill:"var(--neg)","font-size":"10.5px","font-weight":"700"});
+  addText(svg,300,392,"JUDGES · silent",{fill:"var(--judge)","font-size":"10.5px","font-weight":"700"});
+  Object.keys(POS).forEach(function(id){ const p=POS[id],side=id[0],role=id.split(".")[1];
+    const g=el("g",{id:"node-"+id});
+    g.appendChild(el("circle",{cx:p[0],cy:p[1],r:12,fill:"#1a2036",stroke:SIDECOL[side],"stroke-width":"2","stroke-opacity":"0.85"}));
+    g.appendChild(el("circle",{cx:p[0],cy:p[1],r:12,fill:"none",stroke:"#fff","stroke-opacity":"0","stroke-width":"3",class:"halo"}));
+    const lt=el("text",{x:p[0],y:p[1]+(p[1]>300?22:0)+(p[1]<300?-18:0),"text-anchor":"middle","dominant-baseline":"middle",class:"nodelabel"}); lt.textContent=role; g.appendChild(lt);
+    svg.appendChild(g); });
+  svg.appendChild(el("circle",{cx:NUC[0],cy:NUC[1],r:0,id:"verdictDisc",fill:"#0a0d1a","fill-opacity":"0"}));
+}
+let activeNode=null;
+function setActive(id){ if(activeNode){ const g=$("node-"+activeNode); if(g){ const h=g.querySelector(".halo"); h.setAttribute("stroke-opacity","0"); } }
+  activeNode=id; const g=$("node-"+id); if(g){ const h=g.querySelector(".halo"); if(h){ h.setAttribute("stroke-opacity","0.85"); h.setAttribute("r","17"); } } }
+function fillNode(id,color){ const g=$("node-"+id); if(g) g.querySelector("circle").setAttribute("fill",color); }
+
+function renderAgenda(){ const bar=$("agenda"); bar.innerHTML='<div class="playhead" id="playhead"></div>';
+  res.segments.forEach(function(s){ const b=document.createElement("div"); b.className="blk"; b.style.width=(s.dur/CORE.TOTAL*100)+"%"; b.style.background=PHASECOL[s.phase]||"#555"; b.title=s.speaker+" · "+s.kind+" ("+mmss(s.t0)+")"; bar.appendChild(b); }); }
+function setPlayhead(frac){ const p=$("playhead"); if(p) p.style.left=(frac*100)+"%"; }
+function setClock(sec){ $("clock").textContent=mmss(sec); }
+
+function meterShell(role){ const d=document.createElement("div"); d.className="judge";
+  d.innerHTML='<div class="jl"><span>Judge · '+role+'</span><span class="ballot" id="ballot-'+role+'">—</span></div><div class="meter"><div class="mid"></div><div class="mk" id="mk-'+role+'" style="left:50%;background:#6b7299"></div></div>'; return d; }
+function setMeter(role,net){ const pos=Math.max(4,Math.min(96,50+(net/2.4)*50)); const mk=$("mk-"+role); if(mk){ mk.style.left=pos+"%"; mk.style.background=net>0.02?"var(--good)":net<-0.02?"var(--bad)":"#6b7299"; }
+  const b=$("ballot-"+role); if(b){ const bl=net>1e-9?"AFF":net<-1e-9?"NEG":"TIE"; b.textContent=bl; b.style.color=bl==="AFF"?"var(--good)":bl==="NEG"?"var(--bad)":"var(--mute)"; } }
+
+function addEntry(cls,who,tag,say,ts,delta){ const d=document.createElement("div"); d.className="entry "+cls;
+  d.innerHTML='<div class="top"><span class="who">'+who+'</span><span class="ts">'+ts+'</span><span class="tag '+cls+'">'+tag+'</span>'+(delta?'<span class="delta">'+delta+'</span>':'')+'</div><div class="say">'+say+'</div>';
+  $("transcript").appendChild(d); $("transcript").scrollTop=$("transcript").scrollHeight;
+  if(reduce) d.classList.add("show"); else requestAnimationFrame(function(){ requestAnimationFrame(function(){ d.classList.add("show"); }); }); }
+
+function revealSegment(s){
+  let cls,tag;
+  if(s.phase==="framing"){cls="frame";tag="FRAME";}
+  else if(s.kind==="question"){cls="question";tag="CROSS-EX";}
+  else if(s.kind==="ruling"){cls="ruling";tag="BALLOT";}
+  else if(s.side>0){cls="aff";tag="AFF";} else if(s.side<0){cls="neg";tag="NEG";} else {cls="frame";tag="—";}
+  let delta=""; if(s.scored){ const pd=s.side*s.strength*0.6; delta="panel "+(pd>=0?"+":"")+pd.toFixed(2); }
+  addEntry(cls,s.speaker,tag,s.text,mmss(s.t0),delta);
+  const nid=nodeForSpeaker(s.speaker); if(nid) setActive(nid);
+  if(s.scored && nid) fillNode(nid,voteColor(s.strength));
+  if(s.scored){ CORE.ROLES.forEach(function(r){ running[r]+= s.side*s.strength*(r===s.role?CORE.W_SAME:CORE.W_CROSS); }); CORE.ROLES.forEach(function(r){ setMeter(r,running[r]); }); }
+  if(s.phase==="framing"){ const cls2=/· F$/.test(s.speaker)?"f":"m"; $("framing").innerHTML+='<div class="frameline '+cls2+'"><b>'+(cls2==="f"?"F":"M")+' · FRAME</b><br>'+s.text+'</div>'; }
+  if(s.kind==="ruling"){ const j=res.judges.filter(function(x){return x.role===s.role;})[0]; addReason(j); }
+  $("nowline").textContent="Now · "+s.speaker+" — "+s.kind+"  ["+mmss(s.t0)+"–"+mmss(s.t1)+"]";
+}
+function addReason(j){ if($("reason-"+j.role)) return; const d=document.createElement("div"); d.className="reason"; d.id="reason-"+j.role;
+  const col=j.ballot==="AFF"?"var(--good)":j.ballot==="NEG"?"var(--bad)":"var(--mute)";
+  d.innerHTML='<b style="color:'+col+'">JUDGE '+j.role.toUpperCase()+' · '+j.ballot+'</b><br>'+j.reason; $("reasons").appendChild(d); }
+
+function renderStatic(){ $("arttitle").textContent=article.title; $("extract").textContent=article.extract;
+  const s=$("src"); if(article.url){ s.href=article.url; s.textContent="↗ "+article.url.replace(/^https?:\/\//,""); } else { s.textContent=""; s.removeAttribute("href"); }
+  $("resolution").innerHTML='<b>RESOLVED:</b> “'+article.title+'” holds merit.<div class="m">nucleus merit '+res.nucleus.merit.toFixed(3)+'</div>';
+  const jw=$("judges"); jw.innerHTML=""; CORE.ROLES.forEach(function(r){ jw.appendChild(meterShell(r)); }); }
+
+function finalize(){
+  res.segments.forEach(function(s){ if(!revealed.has(s.id)){ revealed.add(s.id); revealSegment(s); } });
+  CORE.ROLES.forEach(function(r){ const j=res.judges.filter(function(x){return x.role===r;})[0]; setMeter(r,j.net); fillNode("J."+r, j.ballot==="AFF"?"var(--good)":j.ballot==="NEG"?"var(--bad)":"#6b7299"); });
+  setActive(null);
+  const col=res.verdict==="UPHELD"?"var(--good)":res.verdict==="STRUCK"?"var(--bad)":"var(--warn)";
+  const v=$("verdict"); v.textContent=res.verdict; v.className="big "+res.verdict; $("pn").textContent="panel "+res.panelNet.toFixed(2);
+  $("panel").textContent="Panel: "+res.ballotCount.aff+"–"+res.ballotCount.neg+(res.ballotCount.tie?" ("+res.ballotCount.tie+" tie)":"")+(res.ballotCount.aff>res.ballotCount.neg?" — affirmative carries":res.ballotCount.neg>res.ballotCount.aff?" — negative carries":" — split");
+  const disc=$("verdictDisc"); if(disc){ disc.setAttribute("r","24"); disc.setAttribute("fill-opacity","0.85"); }
+  let vt=$("coreV"); if(!vt){ vt=el("text",{id:"coreV",x:NUC[0],y:NUC[1],"text-anchor":"middle","dominant-baseline":"middle"}); $("stage").appendChild(vt); }
+  vt.setAttribute("style","font-family:var(--mono);font-size:9.5px;font-weight:800;fill:"+col); vt.textContent=res.verdict;
+  $("nowline").textContent="adjourned · "+res.verdict; $("status").textContent="ballot in · "+res.verdict;
+  setClock(CORE.TOTAL); setPlayhead(1);
+  recordDocket(); scheduleNext();
+}
+
+function speedMs(){ const v=$("speed").value; return v==="quick"?90000:v==="instant"?0:45000; }
+function prepare(){ if(nextTimer){clearTimeout(nextTimer);nextTimer=null;} if(raf) cancelAnimationFrame(raf); raf=null; startTs=0; revealed=new Set(); running={}; CORE.ROLES.forEach(function(r){ running[r]=0; });
+  res=CORE.deliberate(article.extract); buildStage(); renderAgenda(); renderStatic();
+  $("framing").innerHTML=""; $("reasons").innerHTML=""; $("transcript").innerHTML=""; $("verdict").textContent="—"; $("verdict").className="big"; $("pn").textContent=""; $("panel").textContent=""; CORE.ROLES.forEach(function(r){ setMeter(r,0); }); setClock(0); setPlayhead(0); }
+
+function tick(ts){ if(!startTs) startTs=ts; const pm=speedMs();
+  const cur = pm===0 ? CORE.TOTAL : Math.min(CORE.TOTAL, ((ts-startTs)/pm)*CORE.TOTAL);
+  res.segments.forEach(function(s){ if(!revealed.has(s.id)&&s.t0<=cur){ revealed.add(s.id); revealSegment(s); } });
+  setClock(cur); setPlayhead(cur/CORE.TOTAL);
+  if(cur>=CORE.TOTAL){ finalize(); return; }
+  raf=requestAnimationFrame(tick);
+}
+function runDebate(){ prepare(); if(reduce){ res.segments.forEach(function(s){ revealed.add(s.id); revealSegment(s); }); finalize(); return; }
+  $("status").textContent="debating…"; raf=requestAnimationFrame(tick); }
+function onSpeed(){ /* applies on next run */ }
+function cycleSeed(){ seedIdx=(seedIdx+1)%SEEDS_BANK.length; article=SEEDS_BANK[seedIdx]; $("status").textContent="loaded: "+article.title; runDebate(); }
+async function fetchRandom(){ $("status").textContent="fetching from wikipedia…";
+  try{ const r=await fetch("https://en.wikipedia.org/api/rest_v1/page/random/summary",{headers:{Accept:"application/json"}}); if(!r.ok) throw new Error("HTTP "+r.status);
+    const d=await r.json(); const ex=(d.extract||"").replace(/\s+/g," ").trim(); if(ex.length<60) throw new Error("thin extract");
+    article={title:d.title||"(untitled)",extract:ex,url:(d.content_urls&&d.content_urls.desktop&&d.content_urls.desktop.page)||""};
+    $("status").textContent="live: "+article.title; runDebate();
+  }catch(e){ $("status").textContent="live fetch blocked ("+e.message+") — using offline seed"; cycleSeed(); } }
+
+$("status").textContent="loaded: "+article.title; runDebate();
+</script>
+</body>
+</html>

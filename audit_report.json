@@ -1,0 +1,89 @@
+{
+  "document_id": "INSP-20260621-toph-debate-1hr",
+  "method": "Closure Loop (Detect -> Anchor -> Compare -> Witness)",
+  "timestamp": "2026-06-21T00:43:05.588Z",
+  "model": "60:00 policy debate: framing(F,M) + 3 rounds(For/Against constructive, rebuttal, judge cross-ex, answer) + 3-judge deliberation with reasons",
+  "corpus_size": 8,
+  "checks": [
+    {
+      "name": "weights_48_52_partition",
+      "pass": true,
+      "detail": "male=0.48 female=0.52 sum=1"
+    },
+    {
+      "name": "judge_weights_are_spec",
+      "pass": true,
+      "detail": "W_SAME=1 W_CROSS=0.4"
+    },
+    {
+      "name": "merit_equals_independent_blend",
+      "pass": true,
+      "detail": "max|merit-recompute|=0.00e+0 ()"
+    },
+    {
+      "name": "strengths_in_0_1",
+      "pass": true,
+      "detail": "all scored strengths in [0,1]"
+    },
+    {
+      "name": "finite_on_all_inputs",
+      "pass": true,
+      "detail": "all finite"
+    },
+    {
+      "name": "timeline_sums_to_3600_contiguous",
+      "pass": true,
+      "detail": "contiguous 0..3600 (60:00), no gaps"
+    },
+    {
+      "name": "structure_framing_rounds_deliberation",
+      "pass": true,
+      "detail": "frame_FM=true rounds_ok=true rulings=3"
+    },
+    {
+      "name": "determinism_and_seed_independent",
+      "pass": true,
+      "detail": "identical across reruns and seeds"
+    },
+    {
+      "name": "teams_argue_complementary_strength",
+      "pass": true,
+      "detail": "max|forStr+againstStr-1|=0.00e+0 () — genuine opposition"
+    },
+    {
+      "name": "judge_tally_recomputed_from_scored_events",
+      "pass": true,
+      "detail": "max|judgeNet-recompute|=0.00e+0 () — judges tabulate the actual events"
+    },
+    {
+      "name": "verdict_threshold_independent",
+      "pass": true,
+      "detail": "verdict matches independent panelNet rule"
+    },
+    {
+      "name": "verdict_responsive_to_input",
+      "pass": true,
+      "detail": "distinct verdicts: UPHELD, STRUCK, CONTESTED — responds to the article"
+    },
+    {
+      "name": "one_judge_question_per_round",
+      "pass": true,
+      "detail": "exactly 1 question/round, asked by the matching judge"
+    },
+    {
+      "name": "judges_give_reasons_matching_rulings",
+      "pass": true,
+      "detail": "3 judges give reasons; each ruling segment carries that reason"
+    },
+    {
+      "name": "shipped_equals_tested",
+      "pass": true,
+      "detail": "core block verbatim in index.html"
+    }
+  ],
+  "passed": 15,
+  "total": 15,
+  "compliance": "Fully Compliant",
+  "verdict": "WORKS — verified, not asserted",
+  "sha256": "sha256:8ad8f1283cf6f4c491fbe35c90d5f9049e97e3738fd8139aa2c85148a4ce69c3"
+}
