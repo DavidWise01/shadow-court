@@ -85,6 +85,12 @@
       <option value="quick">Playback: Quick (~90s)</option>
       <option value="instant">Playback: Instant</option>
     </select>
+    <select id="nucleus" onchange="onNucleus()">
+      <option value="science">Nuclei: Ada Lovelace ⚭ Alan Turing · science</option>
+      <option value="religion">Nuclei: Hildegard of Bingen ⚭ Thomas Aquinas · religion</option>
+      <option value="politics">Nuclei: Hannah Arendt ⚭ Machiavelli · politics</option>
+      <option value="rotate">Nuclei: ⟳ rotate all three</option>
+    </select>
     <button onclick="fetchRandom()">Pull a random article <span class="k">live · en.wikipedia.org</span></button>
     <button onclick="cycleSeed()">Cycle a baked-in article <span class="k">offline · always works</span></button>
     <button id="perpbtn" onclick="togglePerpetual()">⏸ Recess the court <span class="k">stop after this debate</span></button>
@@ -122,7 +128,7 @@
 
   <aside class="panel">
     <h2>Resolution</h2><div class="resbox" id="resolution">—</div>
-    <h2>Nucleus frames it</h2><div id="framing"></div>
+    <h2>Nucleus frames it · <span id="nucpair" style="text-transform:none;color:var(--ink);letter-spacing:0">—</span></h2><div id="framing"></div>
     <h2>Judges (silent) — live ballot</h2><div id="judges"></div>
     <h2>Decision</h2>
     <div class="verdict"><span class="big" id="verdict">—</span><span class="pn" id="pn"></span></div>
@@ -143,6 +149,13 @@
   var ROLES=["King","Queen","Jester"];
   var AXIS={King:"authority",Queen:"breadth",Jester:"resistance"};
   var TOTAL=3600;
+  // the nucleus dipole, given faces: F (relational, 52%) ⚭ M (assertion, 48%), per domain. Rendered as framing voices in tribute.
+  var NUCLEI={
+    science: { f:{name:"Ada Lovelace",         line:"As poetical science I read it relationally"},               m:{name:"Alan Turing",         line:"As a decision problem I read it as a claim that must compel"} },
+    religion:{ f:{name:"Hildegard of Bingen",  line:"As the greening web of creation I read it relationally"},   m:{name:"Thomas Aquinas",      line:"As a question for the Summa I read it as a claim that must be proven"} },
+    politics:{ f:{name:"Hannah Arendt",        line:"As the web of human plurality I read it relationally"},      m:{name:"Niccolò Machiavelli", line:"As the assertion of power I read it as a claim that must compel"} }
+  };
+  function pickNuclei(opts){ var d=(opts&&typeof opts==="object"&&opts.domain&&NUCLEI[opts.domain])?opts.domain:"science"; return NUCLEI[d]; }
 
   function clamp01(x){ if(!isFinite(x)) return 0; return x<0?0:x>1?1:x; }
   function round(x,n){ var p=Math.pow(10,n||3); return Math.round(x*p)/p; }
@@ -179,8 +192,9 @@
   }
   function weight(jr,er){ return jr===er?W_SAME:W_CROSS; }
 
-  function deliberate(text,_seed){
+  function deliberate(text,opts){
     var f=extractFeatures(text), idea=nucleusDebate(f);
+    var NN=pickNuclei(opts), NF=NN.f, NM=NN.m;
     var dmf=Math.abs(idea.mScore-idea.fScore);
     var segments=[], t=0, sid=0;
     function seg(dur,phase,kind,speaker,side,role,strength,scored,text){
@@ -188,11 +202,11 @@
       t+=dur; segments.push(s); return s;
     }
 
-    // nucleus frames: F first (relation 52%), then M (assertion 48%)
-    seg(180,"framing","frame","Nucleus · F",0,null,0,false,
-      "Madam Chair, read relationally this resolution is a system of dependencies — relational density "+pct(f.rel)+". The question is whether it coheres.");
-    seg(180,"framing","frame","Nucleus · M",0,null,0,false,
-      "And read as a claim it must compel — assertion "+pct(f.assert)+" against hedging "+pct(f.hedge)+". Merit opens at "+round(idea.merit,2)+".");
+    // nucleus frames: F first (relation 52%), then M (assertion 48%) — given persona faces
+    seg(180,"framing","frame",NF.name+" · F",0,null,0,false,
+      NF.line+": this resolution is a system of dependencies — relational density "+pct(f.rel)+". The question is whether it coheres.");
+    seg(180,"framing","frame",NM.name+" · M",0,null,0,false,
+      NM.line+" — assertion "+pct(f.assert)+" against hedging "+pct(f.hedge)+". Merit opens at "+round(idea.merit,2)+".");
 
     // three rounds (14:00 each)
     ROLES.forEach(function(role){
@@ -250,8 +264,8 @@
       judges:judges, panelNet:panelNet, ballotCount:{aff:aff,neg:neg,tie:tie}, verdict:verdict };
   }
 
-  var API={ W_MALE:W_MALE,W_FEMALE:W_FEMALE,W_SAME:W_SAME,W_CROSS:W_CROSS,ROLES:ROLES,AXIS:AXIS,TOTAL:TOTAL,
-    clamp01:clamp01,extractFeatures:extractFeatures,nucleusDebate:nucleusDebate,roleBase:roleBase,recoveryFor:recoveryFor,deliberate:deliberate };
+  var API={ W_MALE:W_MALE,W_FEMALE:W_FEMALE,W_SAME:W_SAME,W_CROSS:W_CROSS,ROLES:ROLES,AXIS:AXIS,TOTAL:TOTAL,NUCLEI:NUCLEI,
+    clamp01:clamp01,extractFeatures:extractFeatures,nucleusDebate:nucleusDebate,roleBase:roleBase,recoveryFor:recoveryFor,deliberate:deliberate,pickNuclei:pickNuclei };
   if(typeof module!=="undefined"&&module.exports) module.exports=API;
   root.CORE=API;
 })(typeof globalThis!=="undefined"?globalThis:this);
@@ -265,6 +279,8 @@ const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
 let article=SEEDS_BANK[0], seedIdx=0, res=null, raf=null, startTs=0, revealed=new Set(), running={};
 // ── perpetual machinery: debate forever, topic after topic; each verdict witnessed in a hash-linked docket ──
 let perpetual=true, docket=[], debateNo=0, prevHash="GENESIS", nextTimer=null;
+let nucleusDomain="science", DOMAINS=["science","religion","politics"], domainRot=0;
+function onNucleus(){ runDebate(); }
 function hash8(str){ let h=0x811c9dc5>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return ("0000000"+(h>>>0).toString(16)).slice(-8); }
 function recordDocket(){ debateNo++; const prev=prevHash; const panel3=res.panelNet.toFixed(3);
   const body=prev+"|"+article.title+"|"+res.verdict+"|"+panel3; const h=hash8(body); prevHash=h;
@@ -311,7 +327,7 @@ function voteColor(v){ return "hsl("+Math.round(v*130)+",72%,56%)"; }
 function el(t,a){ const e=document.createElementNS(SVGNS,t); for(const k in a) e.setAttribute(k,a[k]); return e; }
 function pie(cx,cy,r,a0,a1){ let p="M"+cx+","+cy; const n=36; for(let i=0;i<=n;i++){ const a=(a0+(a1-a0)*i/n)*Math.PI/180; p+=" L"+(cx+r*Math.cos(a))+","+(cy-r*Math.sin(a)); } return p+" Z"; }
 function addText(svg,x,y,txt,style){ const t=el("text",{x:x,y:y,"text-anchor":"middle","dominant-baseline":"middle"}); let s="font-family:var(--mono);"; for(const k in style) s+=k+":"+style[k]+";"; t.setAttribute("style",s); t.textContent=txt; svg.appendChild(t); return t; }
-function nodeForSpeaker(sp){ if(sp.indexOf("Nucleus")===0) return "NUC"; const m=sp.split(" · "); const team=m[0],role=m[1];
+function nodeForSpeaker(sp){ if(sp.indexOf("Nucleus")===0 || / · [FM]$/.test(sp)) return "NUC"; const m=sp.split(" · "); const team=m[0],role=m[1];
   return team==="For"?"F."+role:team==="Against"?"A."+role:team==="Judge"?"J."+role:null; }
 
 function buildStage(){
@@ -375,6 +391,7 @@ function addReason(j){ if($("reason-"+j.role)) return; const d=document.createEl
 function renderStatic(){ $("arttitle").textContent=article.title; $("extract").textContent=article.extract;
   const s=$("src"); if(article.url){ s.href=article.url; s.textContent="↗ "+article.url.replace(/^https?:\/\//,""); } else { s.textContent=""; s.removeAttribute("href"); }
   $("resolution").innerHTML='<b>RESOLVED:</b> “'+article.title+'” holds merit.<div class="m">nucleus merit '+res.nucleus.merit.toFixed(3)+'</div>';
+  if($("nucpair")&&CORE.NUCLEI){ var nn=CORE.NUCLEI[nucleusDomain]||CORE.NUCLEI.science; $("nucpair").textContent=nn.f.name+" (F) ⚭ "+nn.m.name+" (M)"; }
   const jw=$("judges"); jw.innerHTML=""; CORE.ROLES.forEach(function(r){ jw.appendChild(meterShell(r)); }); }
 
 function finalize(){
@@ -394,7 +411,8 @@ function finalize(){
 
 function speedMs(){ const v=$("speed").value; return v==="quick"?90000:v==="instant"?0:45000; }
 function prepare(){ if(nextTimer){clearTimeout(nextTimer);nextTimer=null;} if(raf) cancelAnimationFrame(raf); raf=null; startTs=0; revealed=new Set(); running={}; CORE.ROLES.forEach(function(r){ running[r]=0; });
-  res=CORE.deliberate(article.extract); buildStage(); renderAgenda(); renderStatic();
+  var _sel=$("nucleus")?$("nucleus").value:"science"; nucleusDomain = _sel==="rotate" ? DOMAINS[(domainRot++)%3] : _sel;
+  res=CORE.deliberate(article.extract,{domain:nucleusDomain}); buildStage(); renderAgenda(); renderStatic();
   $("framing").innerHTML=""; $("reasons").innerHTML=""; $("transcript").innerHTML=""; $("verdict").textContent="—"; $("verdict").className="big"; $("pn").textContent=""; $("panel").textContent=""; CORE.ROLES.forEach(function(r){ setMeter(r,0); }); setClock(0); setPlayhead(0); }
 
 function tick(ts){ if(!startTs) startTs=ts; const pm=speedMs();

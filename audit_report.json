@@ -1,7 +1,7 @@
 {
   "document_id": "INSP-20260621-toph-debate-1hr",
   "method": "Closure Loop (Detect -> Anchor -> Compare -> Witness)",
-  "timestamp": "2026-06-21T01:04:11.882Z",
+  "timestamp": "2026-06-21T01:40:59.715Z",
   "model": "60:00 policy debate: framing(F,M) + 3 rounds(For/Against constructive, rebuttal, judge cross-ex, answer) + 3-judge deliberation with reasons",
   "corpus_size": 8,
   "checks": [

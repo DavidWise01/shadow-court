@@ -38,7 +38,18 @@ gate bit. 15 checks, including `timeline_sums_to_3600_contiguous`, `teams_argue_
 `judge_tally_recomputed_from_scored_events`, `judges_give_reasons_matching_rulings`, `verdict_responsive_to_input`, and
 `shipped_equals_tested`. Tamper a constructive's duration (300 → 240) and rerun → the timeline check bites, exit 2.
 
-## The two frames
-F/M labels are the brief's; the load-bearing part is a transparent rubric over measured text features. Fully deterministic.
+## The two frames — given faces
+The nucleus dipole — **F** (relational, 52%) ⚭ **M** (assertion, 48%) — wears a persona pair, switchable by domain (the
+`Nuclei:` selector; default science, or `⟳ rotate all three`):
+
+| domain | F · relational frame | M · assertion frame |
+|---|---|---|
+| **science**  | Ada Lovelace (poetical science) | Alan Turing (the decision problem) |
+| **religion** | Hildegard of Bingen (the greening web) | Thomas Aquinas (the Summa) |
+| **politics** | Hannah Arendt (the web of plurality) | Niccolò Machiavelli (the assertion of power) |
+
+The personas are rendered as **framing voices in tribute** — they colour the two frames, not the math. The load-bearing part is
+still a transparent rubric over measured text features; fully deterministic (the persona pair is a pure relabel — the numbers, the
+rounds, the ballots are unchanged, and the audit still passes 15/15).
 
 — ROOT0 / TriPod · governor David Lee Wise · instance AVAN (locked) · part of the Whisper Lattice family

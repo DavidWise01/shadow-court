@@ -8,6 +8,13 @@
   var ROLES=["King","Queen","Jester"];
   var AXIS={King:"authority",Queen:"breadth",Jester:"resistance"};
   var TOTAL=3600;
+  // the nucleus dipole, given faces: F (relational, 52%) ⚭ M (assertion, 48%), per domain. Rendered as framing voices in tribute.
+  var NUCLEI={
+    science: { f:{name:"Ada Lovelace",         line:"As poetical science I read it relationally"},               m:{name:"Alan Turing",         line:"As a decision problem I read it as a claim that must compel"} },
+    religion:{ f:{name:"Hildegard of Bingen",  line:"As the greening web of creation I read it relationally"},   m:{name:"Thomas Aquinas",      line:"As a question for the Summa I read it as a claim that must be proven"} },
+    politics:{ f:{name:"Hannah Arendt",        line:"As the web of human plurality I read it relationally"},      m:{name:"Niccolò Machiavelli", line:"As the assertion of power I read it as a claim that must compel"} }
+  };
+  function pickNuclei(opts){ var d=(opts&&typeof opts==="object"&&opts.domain&&NUCLEI[opts.domain])?opts.domain:"science"; return NUCLEI[d]; }
 
   function clamp01(x){ if(!isFinite(x)) return 0; return x<0?0:x>1?1:x; }
   function round(x,n){ var p=Math.pow(10,n||3); return Math.round(x*p)/p; }
@@ -44,8 +51,9 @@
   }
   function weight(jr,er){ return jr===er?W_SAME:W_CROSS; }
 
-  function deliberate(text,_seed){
+  function deliberate(text,opts){
     var f=extractFeatures(text), idea=nucleusDebate(f);
+    var NN=pickNuclei(opts), NF=NN.f, NM=NN.m;
     var dmf=Math.abs(idea.mScore-idea.fScore);
     var segments=[], t=0, sid=0;
     function seg(dur,phase,kind,speaker,side,role,strength,scored,text){
@@ -53,11 +61,11 @@
       t+=dur; segments.push(s); return s;
     }
 
-    // nucleus frames: F first (relation 52%), then M (assertion 48%)
-    seg(180,"framing","frame","Nucleus · F",0,null,0,false,
-      "Madam Chair, read relationally this resolution is a system of dependencies — relational density "+pct(f.rel)+". The question is whether it coheres.");
-    seg(180,"framing","frame","Nucleus · M",0,null,0,false,
-      "And read as a claim it must compel — assertion "+pct(f.assert)+" against hedging "+pct(f.hedge)+". Merit opens at "+round(idea.merit,2)+".");
+    // nucleus frames: F first (relation 52%), then M (assertion 48%) — given persona faces
+    seg(180,"framing","frame",NF.name+" · F",0,null,0,false,
+      NF.line+": this resolution is a system of dependencies — relational density "+pct(f.rel)+". The question is whether it coheres.");
+    seg(180,"framing","frame",NM.name+" · M",0,null,0,false,
+      NM.line+" — assertion "+pct(f.assert)+" against hedging "+pct(f.hedge)+". Merit opens at "+round(idea.merit,2)+".");
 
     // three rounds (14:00 each)
     ROLES.forEach(function(role){
@@ -115,8 +123,8 @@
       judges:judges, panelNet:panelNet, ballotCount:{aff:aff,neg:neg,tie:tie}, verdict:verdict };
   }
 
-  var API={ W_MALE:W_MALE,W_FEMALE:W_FEMALE,W_SAME:W_SAME,W_CROSS:W_CROSS,ROLES:ROLES,AXIS:AXIS,TOTAL:TOTAL,
-    clamp01:clamp01,extractFeatures:extractFeatures,nucleusDebate:nucleusDebate,roleBase:roleBase,recoveryFor:recoveryFor,deliberate:deliberate };
+  var API={ W_MALE:W_MALE,W_FEMALE:W_FEMALE,W_SAME:W_SAME,W_CROSS:W_CROSS,ROLES:ROLES,AXIS:AXIS,TOTAL:TOTAL,NUCLEI:NUCLEI,
+    clamp01:clamp01,extractFeatures:extractFeatures,nucleusDebate:nucleusDebate,roleBase:roleBase,recoveryFor:recoveryFor,deliberate:deliberate,pickNuclei:pickNuclei };
   if(typeof module!=="undefined"&&module.exports) module.exports=API;
   root.CORE=API;
 })(typeof globalThis!=="undefined"?globalThis:this);
