@@ -18,11 +18,18 @@ back to a baked-in seed when offline). It loops on its own. The `⏸ Recess the 
 - The deterministic **CORE is untouched** — the perpetual loop and docket live entirely in the player. `node audit.js` still passes 15/15,
   including `shipped_equals_tested` (the audited CORE block ships verbatim inside `index.html`).
 
-## The debate (unchanged)
+## The debate — a real contested panel (rebuilt)
 TIMELINE (sums to exactly 3600s, verified): framing (F then M) → King round → Queen round → Jester round → deliberation. For team
-(King/Queen/Jester) affirms; Against team negates. Each scored exchange — constructives, rebuttals, and the cross-ex answers — moves the
-three silent judges, who weight their own role's clash full and the others partial. A judge asks one question per round; the answer is
-scored, so cross-ex moves the panel mid-round. Majority ballot decides; the nucleus renders the verdict — first and last.
+(King/Queen/Jester) affirms; Against team negates. A judge asks one question per round; the answer is scored, so cross-ex moves the panel
+mid-round. Majority ballot decides; the nucleus renders the verdict — first and last.
+
+The judging was rebuilt to be a genuine jury, not a rubber stamp. Each axis is **centered** so a round can swing either way (no
+affirmative floor), and the three judges are **independent perspectives** keyed to different features — **King** weighs *authority*
+(assertion vs hedge, merit), **Queen** weighs *breadth* (relational density, lexical reach), **Jester** weighs *resistance* (does it
+survive frame-inversion). So a hard-but-narrow claim genuinely splits the bench — King affirms, Queen negates, Jester swings — and the
+judges **say why, with teeth**: *"a thimble — connecting to nothing"*, *"a mouse of a claim, hedging where a spine should be"*,
+*"it snapped on the first push."* Tuned empirically over realistic prose to ≈ **38% UPHELD / 31% CONTESTED / 31% STRUCK** with the panel
+splitting ~1/3 of the time. The verdict bands and judge weights are CORE constants the audit reads, so the gate verifies the live spec.
 
 ## Run it
 Open `index.html`. It plays on load and **keeps going**. Watch the clock (00:00 → 60:00), the agenda playhead, and the docket grow.

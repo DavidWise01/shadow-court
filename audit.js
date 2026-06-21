@@ -20,8 +20,8 @@ function check(n,fn){ var d="",p=false; try{ var r=fn(); if(r===true)p=true; els
 
 check("weights_48_52_partition",function(){ var ok=CORE.W_MALE===0.48&&CORE.W_FEMALE===0.52&&approx(CORE.W_MALE+CORE.W_FEMALE,1);
   return {pass:ok,detail:"male="+CORE.W_MALE+" female="+CORE.W_FEMALE+" sum="+(CORE.W_MALE+CORE.W_FEMALE)};});
-check("judge_weights_are_spec",function(){ var ok=CORE.W_SAME===1.0&&CORE.W_CROSS===0.4;
-  return {pass:ok,detail:"W_SAME="+CORE.W_SAME+" W_CROSS="+CORE.W_CROSS};});
+check("judge_weights_are_spec",function(){ var ok=CORE.W_SAME===1.0&&CORE.W_CROSS===0.3&&CORE.W_CROSS<CORE.W_SAME;
+  return {pass:ok,detail:"own-axis="+CORE.W_SAME+" cross-axis="+CORE.W_CROSS+" (each judge weights its own axis full, the others partial)"};});
 check("merit_equals_independent_blend",function(){ var w=0,wh=""; CORPUS.forEach(function(c){var s=CORE.deliberate(c.text).nucleus;var d=Math.abs(s.merit-(0.48*s.mScore+0.52*s.fScore));if(d>w){w=d;wh=c.id;}}); return {pass:w<1e-12,detail:"max|merit-recompute|="+w.toExponential(2)+" ("+wh+")"};});
 check("strengths_in_0_1",function(){ var bad=null; CORPUS.forEach(function(c){ CORE.deliberate(c.text).segments.filter(function(s){return s.scored;}).forEach(function(s){ if(s.strength<0||s.strength>1) bad=c.id+"."+s.speaker; }); }); return {pass:bad===null,detail:bad?"out of range: "+bad:"all scored strengths in [0,1]"};});
 check("finite_on_all_inputs",function(){ var bad=null; CORPUS.forEach(function(c){ walkNumbers(CORE.deliberate(c.text),function(n){ if(!isFinite(n)) bad=c.id; }); }); return {pass:bad===null,detail:bad?"non-finite at "+bad:"all finite"};});
@@ -61,10 +61,10 @@ check("teams_argue_complementary_strength",function(){ var w=0,wh=""; CORPUS.for
   return {pass:w<1e-12,detail:"max|forStr+againstStr-1|="+w.toExponential(2)+" ("+wh+") — genuine opposition"};});
 
 check("judge_tally_recomputed_from_scored_events",function(){ var w=0,wh=""; CORPUS.forEach(function(c){ var d=CORE.deliberate(c.text); var scored=d.segments.filter(function(s){return s.scored;});
-  d.judges.forEach(function(j){ var indep=0; scored.forEach(function(s){ indep+=s.side*s.strength*(j.role===s.role?1.0:0.4); }); var e=Math.abs(j.net-indep); if(e>w){w=e;wh=c.id+".judge"+j.role;} }); });
+  d.judges.forEach(function(j){ var indep=0; scored.forEach(function(s){ indep+=s.side*s.strength*(j.role===s.role?CORE.W_SAME:CORE.W_CROSS); }); var e=Math.abs(j.net-indep); if(e>w){w=e;wh=c.id+".judge"+j.role;} }); });
   return {pass:w<1e-12,detail:"max|judgeNet-recompute|="+w.toExponential(2)+" ("+wh+") — judges tabulate the actual events"};});
 
-check("verdict_threshold_independent",function(){ function indep(p){return p>=0.2?"UPHELD":p<=-0.2?"STRUCK":"CONTESTED";} var bad=null; CORPUS.forEach(function(c){ var d=CORE.deliberate(c.text); if(d.verdict!==indep(d.panelNet)) bad=c.id; }); return {pass:bad===null,detail:bad?"mismatch "+bad:"verdict matches independent panelNet rule"};});
+check("verdict_threshold_independent",function(){ function indep(p){return p>=CORE.UP?"UPHELD":p<=CORE.DOWN?"STRUCK":"CONTESTED";} var bad=null; CORPUS.forEach(function(c){ var d=CORE.deliberate(c.text); if(d.verdict!==indep(d.panelNet)) bad=c.id; }); return {pass:bad===null,detail:bad?"mismatch "+bad:"verdict matches the panelNet bands (UP="+CORE.UP+" DOWN="+CORE.DOWN+")"};});
 
 check("verdict_responsive_to_input",function(){ var seen={}; CORPUS.forEach(function(c){ seen[CORE.deliberate(c.text).verdict]=1; }); var k=Object.keys(seen); return {pass:k.length>=2,detail:"distinct verdicts: "+k.join(", ")+" — responds to the article"};});
 

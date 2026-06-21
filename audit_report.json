@@ -1,7 +1,7 @@
 {
   "document_id": "INSP-20260621-toph-debate-1hr",
   "method": "Closure Loop (Detect -> Anchor -> Compare -> Witness)",
-  "timestamp": "2026-06-21T01:40:59.715Z",
+  "timestamp": "2026-06-21T01:51:41.496Z",
   "model": "60:00 policy debate: framing(F,M) + 3 rounds(For/Against constructive, rebuttal, judge cross-ex, answer) + 3-judge deliberation with reasons",
   "corpus_size": 8,
   "checks": [
@@ -13,7 +13,7 @@
     {
       "name": "judge_weights_are_spec",
       "pass": true,
-      "detail": "W_SAME=1 W_CROSS=0.4"
+      "detail": "own-axis=1 cross-axis=0.3 (each judge weights its own axis full, the others partial)"
     },
     {
       "name": "merit_equals_independent_blend",
@@ -58,12 +58,12 @@
     {
       "name": "verdict_threshold_independent",
       "pass": true,
-      "detail": "verdict matches independent panelNet rule"
+      "detail": "verdict matches the panelNet bands (UP=0.55 DOWN=-0.15)"
     },
     {
       "name": "verdict_responsive_to_input",
       "pass": true,
-      "detail": "distinct verdicts: UPHELD, STRUCK, CONTESTED — responds to the article"
+      "detail": "distinct verdicts: UPHELD, CONTESTED, STRUCK — responds to the article"
     },
     {
       "name": "one_judge_question_per_round",
@@ -85,5 +85,5 @@
   "total": 15,
   "compliance": "Fully Compliant",
   "verdict": "WORKS — verified, not asserted",
-  "sha256": "sha256:8ad8f1283cf6f4c491fbe35c90d5f9049e97e3738fd8139aa2c85148a4ce69c3"
+  "sha256": "sha256:ae9da5a72a283c7442a65cc5ac97a0b3f9f6cd4b490deec2d48dcffcefeb2c68"
 }

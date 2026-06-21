@@ -145,7 +145,8 @@
 // Nucleus (F first, M second) frames; first and last. Fully deterministic.
 (function (root) {
   "use strict";
-  var W_MALE=0.48, W_FEMALE=0.52, W_SAME=1.0, W_CROSS=0.4;
+  var W_MALE=0.48, W_FEMALE=0.52, W_SAME=1.0, W_CROSS=0.3;
+  var UP=0.55, DOWN=-0.15;  // verdict bands — tuned to ≈38/31/31 over realistic prose (mild affirmative lean: most "holds merit" resolutions do)
   var ROLES=["King","Queen","Jester"];
   var AXIS={King:"authority",Queen:"breadth",Jester:"resistance"};
   var TOTAL=3600;
@@ -181,16 +182,35 @@
     return { wMale:W_MALE, wFemale:W_FEMALE, mScore:mScore, fScore:fScore, merit:W_MALE*mScore+W_FEMALE*fScore };
   }
   function roleBase(role,idea,f){
-    if(role==="King")  return idea.merit;
-    if(role==="Queen") return clamp01(0.30 + 0.5*f.lexDiversity + 4.0*f.rel);
-    return clamp01(1 - 2*Math.abs(idea.mScore-idea.fScore));
+    // each axis CENTERED at 0.5 so a round can genuinely go either way — no affirmative floor
+    if(role==="King")  return clamp01(0.5 + 14*(f.assert - f.hedge) + 5*f.digitDensity);     // authority: net assertiveness
+    if(role==="Queen") return clamp01(0.5 + 16*(f.rel - 0.030) + 0.7*(f.lexDiversity - 0.68)); // breadth: reach vs a typical baseline
+    return clamp01(1 - 2*Math.abs(idea.mScore-idea.fScore));                                   // resistance: survives frame-inversion
   }
   function recoveryFor(role,idea,f){
-    if(role==="King")  return idea.mScore;
-    if(role==="Queen") return f.lexDiversity;
+    if(role==="King")  return clamp01(0.5 + 10*(f.assert - f.hedge));
+    if(role==="Queen") return clamp01(f.lexDiversity);
     return clamp01(1 - 2*Math.abs(idea.mScore-idea.fScore));
   }
   function weight(jr,er){ return jr===er?W_SAME:W_CROSS; }
+  function pctf(x){ return (x*100).toFixed(0)+"%"; }
+  // opinionated, axis-specific, and frankly disparaging of the losing side — deterministic
+  function judgeReason(jr,net,ballot,dec,f,idea){
+    var n="net "+round(net,2), dr=dec.role, dmf=Math.abs(idea.mScore-idea.fScore);
+    if(jr==="King"){
+      if(ballot==="AFF") return "Authority is my axis, and for once the affirmative planted a flag instead of a question mark — assertion "+pctf(f.assert)+", merit "+round(idea.merit,2)+" behind it. The negative nibbled the edges and called it a refutation. The "+dr+" round sealed it. AFF — "+n+".";
+      if(ballot==="NEG") return "I weigh authority, and this was a mouse of a claim — hedging "+pctf(f.hedge)+" where a spine should be. The affirmative never asserted a thing I could be made to believe. The "+dr+" round exposed it. NEG, and it wasn't close — "+n+".";
+      return "On authority it's a wash — assertion "+pctf(f.assert)+" and hedging "+pctf(f.hedge)+" cancel, and neither side earned my vote. TIE — "+n+".";
+    }
+    if(jr==="Queen"){
+      if(ballot==="AFF") return "Breadth is my measure, and this one actually reached — relational density "+pctf(f.rel)+", lexical range "+round(f.lexDiversity,2)+". It connects to more than itself, which is rare on this floor. The "+dr+" round carried it. AFF — "+n+".";
+      if(ballot==="NEG") return "Breadth is my measure, and this resolution is a thimble — relational density "+pctf(f.rel)+", connecting to nothing and generalising to no one. A narrow little argument that mistook itself for a wide one. NEG — "+n+".";
+      return "On breadth it neither spreads nor collapses — relational density "+pctf(f.rel)+", lukewarm, forgettable. TIE — "+n+".";
+    }
+    if(ballot==="AFF") return "I exist to break things. Flip the frame and this one still stands (Δ "+round(dmf,2)+") — more than I can say for most of what staggers through here. AFF, grudgingly — "+n+".";
+    if(ballot==="NEG") return "I exist to break things, and this snapped on the first push — flip the frame and it splits clean down the middle (Δ "+round(dmf,2)+"). A claim that only works if nobody pokes it. NEG — "+n+".";
+    return "It half-survives inversion (Δ "+round(dmf,2)+") — bent, not broken, not solid either. A coward's draw. TIE — "+n+".";
+  }
 
   function deliberate(text,opts){
     var f=extractFeatures(text), idea=nucleusDebate(f);
@@ -247,12 +267,11 @@
       });
       var ballot=net>1e-9?"AFF":net<-1e-9?"NEG":"TIE";
       if(ballot==="AFF") aff++; else if(ballot==="NEG") neg++; else tie++;
-      var side=decisive.side>0?"the affirmative":"the negative";
-      var reason="I weight "+AXIS[jr]+". The "+decisive.role+" round decided it — "+side+"'s "+decisive.kind+" carried "+(decisive.contrib>=0?"+":"")+round(decisive.contrib,2)+" with me. Ballot "+ballot+" (net "+round(net,2)+").";
+      var reason=judgeReason(jr,net,ballot,decisive,f,idea);
       judges.push({role:jr,net:net,ballot:ballot,reason:reason,decisive:decisive}); sumNet+=net;
     });
     var panelNet=sumNet/ROLES.length;
-    var verdict=panelNet>=0.2?"UPHELD":panelNet<=-0.2?"STRUCK":"CONTESTED";
+    var verdict=panelNet>=UP?"UPHELD":panelNet<=DOWN?"STRUCK":"CONTESTED";
 
     // deliberation (12:00): each judge rules with its reason
     ROLES.forEach(function(jr){
@@ -264,7 +283,7 @@
       judges:judges, panelNet:panelNet, ballotCount:{aff:aff,neg:neg,tie:tie}, verdict:verdict };
   }
 
-  var API={ W_MALE:W_MALE,W_FEMALE:W_FEMALE,W_SAME:W_SAME,W_CROSS:W_CROSS,ROLES:ROLES,AXIS:AXIS,TOTAL:TOTAL,NUCLEI:NUCLEI,
+  var API={ W_MALE:W_MALE,W_FEMALE:W_FEMALE,W_SAME:W_SAME,W_CROSS:W_CROSS,UP:UP,DOWN:DOWN,ROLES:ROLES,AXIS:AXIS,TOTAL:TOTAL,NUCLEI:NUCLEI,
     clamp01:clamp01,extractFeatures:extractFeatures,nucleusDebate:nucleusDebate,roleBase:roleBase,recoveryFor:recoveryFor,deliberate:deliberate,pickNuclei:pickNuclei };
   if(typeof module!=="undefined"&&module.exports) module.exports=API;
   root.CORE=API;
